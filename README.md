@@ -1,67 +1,64 @@
-<img width="1536" height="1024" alt="Exp" src="https://github.com/user-attachments/assets/eae11d05-3b46-4308-b872-c9605cbeb3a6" />
+<img width="1536" height="1024" alt="Eu" src="Eu.png" />
 
 
 
 # Experience
 
-Experience — программный интерфейс для управления и настройки автоматизированных сценариев с поддержкой подключения внешнего устройства через Arduino / COM-порт.
+Experience is a software interface for managing and configuring automated scenarios, with support for connecting an external device via Arduino / COM port.
 
-## Возможности
+## Features
 
-* Подключение и управление Arduino через COM-порт
-* Настройка чувствительности и ADS Sensitivity
-* Регулировка Field of View и Pull Strength
-* Создание и сохранение конфигураций
-* Отдельные параметры для различных профилей
-* Настройка оружия, модификаций и прицелов
-* Дополнительные параметры управления
-* Режим Humanize
-* Компактный графический интерфейс
-* Быстрое переключение между сохранёнными конфигурациями
+- Connect and control Arduino devices via COM port
+- Adjust Sensitivity and ADS Sensitivity
+- Configure Field of View and Pull Strength
+- Create and save configurations
+- Separate parameters for different profiles
+- Configure weapons, modifications, and sights
+- Additional control parameters
+- Humanize mode
+- Compact graphical interface
+- Quickly switch between saved configurations
 
-## Интерфейс
+## Interface
 
-Приложение предоставляет единое окно управления, в котором основные параметры сгруппированы по категориям:
+The application provides a unified control window where the main parameters are organized into categories:
 
-* Подключение
-* Настройки
-* Конфигурации
-* Инструменты
-* Оружие
-* Модификации
-* Управление
+- Connection
+- Settings
+- Configurations
+- Tools
+- Weapon
+- Mods
+- Control
 
-Все параметры доступны без необходимости переходить между несколькими окнами.
+All parameters are accessible from a single window without the need to navigate through multiple interfaces.
 
-## Конфигурации
+## Configurations
 
-Настройки можно сохранять в отдельные профили и загружать при необходимости. Это позволяет использовать разные наборы параметров без повторной ручной настройки.
+Settings can be saved as separate profiles and loaded whenever needed. This allows different parameter sets to be used without having to manually configure everything again.
 
-## Подключение
+## Connection
 
-Для работы с внешним устройством используется последовательный интерфейс COM. Доступный порт выбирается непосредственно в приложении.
+The application uses a serial COM interface to communicate with an external device. The available COM port can be selected directly within the application.
 
-## Прошивки и примеры
+## Firmware and Examples
 
-В проекте также могут использоваться примеры данных и прошивок для различных устройств.
+The project may also include example data and firmware files for various devices.
 
-В качестве референса предоставлен файл в формате `.txt` для **Logitech G102**. Он содержит пример данных (байтов), который можно использовать для анализа и адаптации под конкретное устройство. При необходимости значения могут быть изменены в соответствии с данными и байтами используемой мыши.
+A `.txt` file for **Logitech G102** is provided as a reference. It contains example device data (bytes) that can be used for analysis and adaptation to a specific device. If necessary, the values can be modified according to the data and byte structure of the mouse being used.
 
-Также в комплекте могут присутствовать некоторые готовые прошивки в формате `.hex` для других совместимых мышей. Такие прошивки предназначены для установки с помощью **AVRDUDE**.
+The package may also include some ready-to-use `.hex` firmware files for other compatible mice. These firmware files are intended to be flashed using **AVRDUDE**.
 
-Официальные релизы AVRDUDE доступны здесь:
+Official AVRDUDE releases are available here:
 
 https://github.com/avrdudes/avrdude/releases
 
-Перед использованием `.hex` необходимо убедиться в совместимости прошивки с конкретной моделью устройства и используемым микроконтроллером.
+Before using a `.hex` file, make sure that the firmware is compatible with the specific device model and the microcontroller being used.
 
-## Статус проекта
+## Project Status
 
-Проект находится в активной разработке. Функциональность и интерфейс могут изменяться в последующих версиях.
+The project is actively being developed. Features and interface elements may change in future versions.
 
 ---
 
-**Experience — единый интерфейс для настройки, управления и конфигурации.**
-
-
-**Experience — единый интерфейс для настройки, управления и конфигурации.**
+**Experience — a unified interface for configuration, control, and management.**
