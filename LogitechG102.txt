@@ -1,0 +1,188 @@
+#include <SPI.h>
+#include <Usb.h>
+#include <hiduniversal.h>
+#include <usbhub.h>
+#include <HID-Project.h>  // Для расширенной эмуляции мыши
+
+
+
+
+// Fallback definitions to avoid MOUSE_BACK/MOUSE_FORWARD errors
+#ifndef MOUSE_BACK
+#define MOUSE_BACK 0x08
+#endif
+#ifndef MOUSE_FORWARD
+#define MOUSE_FORWARD 0x10
+#endif
+
+USB Usb;
+USBHub Hub(&Usb);
+HIDUniversal Hid(&Usb);
+uint8_t hid_buffer[64];
+
+// Буфер для входящих команд и флаг активации
+String inBuf = "";
+bool enabled = false;
+
+constexpr uint8_t CLICK_BUTTON = MOUSE_LEFT;
+
+// Накопители для суммирования смещений от Serial
+int accumulated_dx = 0;
+int accumulated_dy = 0;
+
+class MouseRptParser : public HIDReportParser {
+protected:
+  bool leftButtonPressed = false;
+  bool rightButtonPressed = false;
+  bool middleButtonPressed = false;
+  bool backButtonPressed = false;
+  bool forwardButtonPressed = false;
+
+  void Parse(USBHID *hid, bool is_rpt_id, uint8_t len, uint8_t *buf) override {
+    if (is_rpt_id || len != 8) {
+      return;
+    }
+
+    // Парсинг данных
+    uint16_t buttons = (buf[1] << 8) | buf[0];  // 16 бит кнопок
+    int16_t dx = (int16_t)((buf[3] << 8) | buf[2]);  // X (16 бит)
+    int16_t dy = (int16_t)((buf[5] << 8) | buf[4]);  // Y (16 бит)
+    int8_t wheel = (int8_t)buf[6];  // Колесо (8 бит)
+    int8_t pan = (int8_t)buf[7];  // Пан (8 бит)
+
+
+    // Эмуляция кнопок
+    if (buttons & 0x0001) {
+      if (!leftButtonPressed) {
+        Mouse.press(MOUSE_LEFT);
+        leftButtonPressed = true;
+      }
+    } else if (leftButtonPressed) {
+      Mouse.release(MOUSE_LEFT);
+      leftButtonPressed = false;
+    }
+
+    if (buttons & 0x0002) {
+      if (!rightButtonPressed) {
+        Mouse.press(MOUSE_RIGHT);
+        rightButtonPressed = true;
+      }
+    } else if (rightButtonPressed) {
+      Mouse.release(MOUSE_RIGHT);
+      rightButtonPressed = false;
+    }
+
+    if (buttons & 0x0004) {
+      if (!middleButtonPressed) {
+        Mouse.press(MOUSE_MIDDLE);
+        middleButtonPressed = true;
+      }
+    } else if (middleButtonPressed) {
+      Mouse.release(MOUSE_MIDDLE);
+      middleButtonPressed = false;
+    }
+
+    if (buttons & 0x0008) {
+      if (!backButtonPressed) {
+        Mouse.press(MOUSE_BACK);  // Button 4
+        backButtonPressed = true;
+      }
+    } else if (backButtonPressed) {
+      Mouse.release(MOUSE_BACK);
+      backButtonPressed = false;
+    }
+
+    if (buttons & 0x0010) {
+      if (!forwardButtonPressed) {
+        Mouse.press(MOUSE_FORWARD);  // Button 5
+        forwardButtonPressed = true;
+      }
+    } else if (forwardButtonPressed) {
+      Mouse.release(MOUSE_FORWARD);
+      forwardButtonPressed = false;
+    }
+
+    // Эмуляция движения и колеса
+    if (dx != 0 || dy != 0 || wheel != 0 || accumulated_dx != 0 || accumulated_dy != 0) {
+      int8_t moveX = constrain(dx + accumulated_dx, -127, 127);
+      int8_t moveY = constrain(dy + accumulated_dy, -127, 127);
+      int8_t moveWheel = constrain(wheel, -127, 127);
+      accumulated_dx = 0;  // Сбрасываем после использования
+      accumulated_dy = 0;
+      Mouse.move(moveX, moveY, moveWheel);
+    }
+  }
+};
+
+MouseRptParser Prs;
+
+void flushInput() {
+  while (Serial.available()) Serial.read();
+}
+
+void clickQuick(uint8_t b = CLICK_BUTTON) {
+  Mouse.press(b);
+  delayMicroseconds(500);
+  Mouse.release(b);
+}
+
+void setup() {
+  Serial.begin(9600);
+
+  Mouse.begin();  // Инициализация эмуляции мыши
+
+  if (Usb.Init() == -1) {
+    while (1);
+  }
+
+  delay(200);
+  Hid.SetReportParser(0, &Prs);
+  Hid.SetProtocol(0, 1);  // Report Protocol
+}
+
+void loop() {
+  Usb.Task();
+
+  // Обработка данных с последовательного порта
+  while (Serial.available()) {
+    char c = Serial.read();
+    if (c == '\r') continue; // Игнорируем возврат каретки
+    if (c == '\n') {
+      inBuf.trim(); // Удаляем пробелы
+
+      if (inBuf.startsWith("ENABLE")) {
+        enabled = true;
+        flushInput();
+      } else if (inBuf.startsWith("DISABLE")) {
+        enabled = false;
+        flushInput();
+      } else if (enabled && inBuf.startsWith("M,")) {
+        int dx = 0, dy = 0;
+        if (sscanf(inBuf.c_str() + 2, "%d,%d", &dx, &dy) == 2) {
+          accumulated_dx += dx; // Накопление смещений от Serial
+          accumulated_dy += dy;
+          if (accumulated_dx != 0 || accumulated_dy != 0) {
+            Mouse.move(accumulated_dx, accumulated_dy, 0); // Отправляем сразу
+            accumulated_dx = 0; // Сбрасываем после отправки
+            accumulated_dy = 0;
+          }
+        }
+      } else if (enabled && inBuf.startsWith("K")) {
+        int mode = -1;
+        sscanf(inBuf.c_str() + 1, ",%d", &mode);
+        if (mode == 1)
+          Mouse.press(CLICK_BUTTON);
+        else if (mode == 0)
+          Mouse.release(CLICK_BUTTON);
+        else
+          clickQuick();
+      } else if (enabled && inBuf.startsWith("C")) {
+        flushInput();
+      }
+
+      inBuf = ""; // Очистка буфера после обработки
+    } else if (inBuf.length() < 64) {
+      inBuf += c; // Добавляем символ в буфер, если он не превышает 64
+    }
+  }
+}
