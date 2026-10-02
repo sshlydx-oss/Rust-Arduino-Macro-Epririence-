@@ -1,4 +1,5 @@
-<img width="1536" height="1024" alt="Eu" src="Eu.png" />
+<img width="1536" height="1024" alt="Eu" src="https://github.com/user-attachments/assets/44838e1b-1e10-4147-a866-3df935a63ddc" />
+
 
 
 
